@@ -4,6 +4,9 @@ import xtend from 'xtend';
 import bbox from '@turf/bbox';
 import debounce from 'lodash/debounce';
 
+
+let UID = 0;
+
 export default class MapboxAccessibility {
   constructor(options) {
     const defaultOptions = {
@@ -19,6 +22,8 @@ export default class MapboxAccessibility {
       throw new Error('a valid accessibleLabelProperty is required');
     }
 
+    // Used for a unique html id
+    this.uid = "mapbox_accessibility_"+UID++;
     this.options = xtend(defaultOptions, options);
   }
 
@@ -72,6 +77,8 @@ export default class MapboxAccessibility {
       this.map.getCanvasContainer().appendChild(feature.marker);
       return feature;
     });
+
+    this._renderAriaDescription();
   };
 
   _movestart = () => {
@@ -85,9 +92,30 @@ export default class MapboxAccessibility {
     }
   };
 
+  _generateAriaDescriptionElement = () => {
+    const descId = this.uid+"_desc";
+    this.map.getCanvas().setAttribute("aria-label", this.options.description || "Embedded map");
+    this.map.getCanvas().setAttribute("aria-describedby", descId);
+    const el = document.createElement("p");
+
+    // Only for aria
+    el.style.display = "none";
+
+    el.id = descId;
+    this.ariaDescriptionElement = el;
+    this.map.getContainer().appendChild(el);
+  }
+
+  _renderAriaDescription = () => {
+    const zoomLevel = Math.round(this.map.getZoom() + 1);
+    const numberOfFeatures = this.features.length;
+    this.ariaDescriptionElement.innerText = `Zoom ${zoomLevel}. Places visible ${numberOfFeatures}`;
+  }
+
   onAdd(map) {
     this.map = map;
 
+    this._generateAriaDescriptionElement();
     this._debouncedQueryFeatures = debounce(this.queryFeatures, 100);
 
     this.map.on('movestart', this._movestart);
@@ -100,6 +128,7 @@ export default class MapboxAccessibility {
 
   onRemove() {
     this.container.parentNode.removeChild(this.container);
+    this.container.parentNode.removeChild(this.ariaDescriptionElement);
     this.map.off('movestart', this._movestart);
     this.map.off('moveend', this._render);
     this.map.off('render', this._render);
