@@ -94,7 +94,6 @@ export default class MapboxAccessibility {
 
   _generateAriaDescriptionElement = () => {
     const descId = this.uid+"_desc";
-    this.map.getCanvas().setAttribute("aria-label", this.options.description || "Embedded map");
     this.map.getCanvas().setAttribute("aria-describedby", descId);
     const el = document.createElement("p");
 

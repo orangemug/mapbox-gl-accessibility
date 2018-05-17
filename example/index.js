@@ -19,7 +19,6 @@ const map = new mapboxgl.Map({
 
 map.on('load', () => {
   map.addControl(new MapboxAccessibility({
-    description: "A lovely street map",
     accessibleLabelProperty: 'name',
     layers: [
       'poi-scalerank4-l15',
